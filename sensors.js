@@ -30,7 +30,7 @@ const FileModule = Me.imports.helpers.file;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 const NM = imports.gi.NM;
-const GLib = import.gi.GLib
+const GLib = imports.gi.GLib;
 
 let GTop, hasGTop = true;
 try {
@@ -297,9 +297,9 @@ var Sensors = GObject.registerClass({
                 const words = i.split(' ');
                 const srcIndex = words.indexOf('src');
                 if (srcIndex !== -1) {
-                    const interface = words[words.indexOf('dev') + 1];
+                    const iface = words[words.indexOf('dev') + 1];
                     const srcIp = words[srcIndex + 1];
-                    this._returnValue(callback, `${interface} IP`, srcIp, 'network', 'string');
+                    this._returnValue(callback, `${iface} IP`, srcIp, 'network', 'string');
                 }
             }
         }
