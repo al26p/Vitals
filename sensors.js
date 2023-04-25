@@ -30,6 +30,7 @@ const FileModule = Me.imports.helpers.file;
 const Gettext = imports.gettext.domain(Me.metadata['gettext-domain']);
 const _ = Gettext.gettext;
 const NM = imports.gi.NM;
+const GLib = import.gi.GLib
 
 let GTop, hasGTop = true;
 try {
@@ -286,6 +287,37 @@ var Sensors = GObject.registerClass({
 
             this._next_public_ip_check -= dwell;
         }
+
+        // private ip checking
+        var check_private_ip = GLib.spawn_command_line_sync('ip route');
+        if (check_private_ip[0]) {
+            var command_output_string = new TextDecoder().decode(check_private_ip[1]);
+            const interfaces = command_output_string.split('\n');
+            for (const i of interfaces) {
+                const words = i.split(' ');
+                const srcIndex = words.indexOf('src');
+                if (srcIndex !== -1) {
+                    const interface = words[words.indexOf('dev') + 1];
+                    const srcIp = words[srcIndex + 1];
+                    this._returnValue(callback, `${interface} IP`, srcIp, 'network', 'string');
+                }
+            }
+        }
+                
+        new FileModule.File('/proc/net/wireless').read("\n", true).then(lines => {
+            // wireless has two headers - first is stripped in helper function
+            lines.shift();
+
+            // if multiple wireless device, we use the last one
+            for (let line of lines) {
+                let netArray = line.trim().split(/\s+/);
+                let quality_pct = netArray[2].substr(0, netArray[2].length-1) / 70;
+                let signal = netArray[3].substr(0, netArray[3].length-1);
+
+                this._returnValue(callback, 'WiFi Link Quality', quality_pct, 'network', 'percent');
+                this._returnValue(callback, 'WiFi Signal Level', signal, 'network', 'string');
+            }
+        }).catch(err => { });
 
         // wireless interface statistics
         new FileModule.File('/proc/net/wireless').read("\n", true).then(lines => {
